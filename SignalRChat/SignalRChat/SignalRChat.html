@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>SignalR 聊天室</title>
+    <style type="text/css">
+        .container {
+            background-color: #99CCFF;
+            border: thick solid #808080;
+            padding: 20px;
+            margin: 20px;
+        }
+    </style>
+    <link href="alertifyjs/alertify.min.css" rel="stylesheet" />
+    <link href="alertifyjs/themes/semantic.min.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container">
+        <input type="text" id="message" />
+        <input type="button" id="sendmessage" value="Send" />
+        <input type="hidden" id="displayname" />
+        <ul id="discussion"></ul>
+    </div>
+
+    <ul id="userList"></ul>
+    <script src="Scripts/jquery-1.10.2.min.js"></script>
+    <script src="Scripts/alertify.min.js"></script>
+    <script src="Scripts/jquery.signalR-2.1.2.min.js"></script>
+    <script src="signalr/hubs"></script>
+    <script>
+        var chat = $.connection.chatHub;
+        chat.client.broadcastMessage = function (name, message) {
+            // Html encode display name and message.
+            var encodedName = $('<div />').text(name).html();
+            var encodedMsg = $('<div />').text(message).html();
+            // Add the message to the page.
+            $('#discussion').append('<li><strong>' + encodedName
+                + '</strong>:&nbsp;&nbsp;' + encodedMsg + '</li>');
+        };
+
+        chat.client.getList = function (data) {
+            var li = '';
+            $.each(data, function () {
+                li += '<li id="' + this.id + '">' + this.name + '</li>';
+            });
+
+            $('#userList').html(li);
+        }
+
+        chat.client.addList = function (id, name) {
+            $('#userList').append('<li id="' + id + '">' + name + '</li>');
+        }
+
+        chat.client.removeList = function (id, message) {
+            $('#discussion').append('<li>' + message + '</li>');
+            alertify.error(message);
+            $("#" + id).remove();
+        }
+
+        chat.client.hello = function (message) {
+            $('#discussion').append('<li>' + message + '</li>');
+            alertify.success(message);
+        }
+
+        chat.client.showConfirm = function (message) {
+            alertify.confirm(message);
+        }
+
+        // Get the user name and store it to prepend to messages.
+        $('#displayname').val(prompt('Enter your name:', ''));
+        // Set initial focus to message input box.
+        $('#message').focus();
+        // Start the connection.
+        $.connection.hub.start().done(function () {
+            chat.server.userConnected($('#displayname').val());
+
+            $('#sendmessage').click(function () {
+                // Call the Send method on the hub.
+                chat.server.send($('#displayname').val(), $('#message').val());
+                // Clear text box and reset focus for next comment.
+                $('#message').val('').focus();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>推播</title>
+</head>
+<body>
+    <input type="text" value=""  id="comfirmMessage"/>
+    <input type="button" id="comfirmBtn" value="" />
+
+    <script src="Scripts/jquery-1.10.2.min.js"></script>
+    <script src="Scripts/jquery.signalR-2.1.2.min.js"></script>
+    <script src="signalr/hubs"></script>
+    
+    <script>
+        var chat = $.connection.chatHub;
+
+        chat.client.showConfirm= function(message) {
+            alertify.confirm(message);
+        }
+
+        $.connection.hub.start().done(function() {
+            chat.server.userConnected('管理員');
+        });
+
+        chat.client.hello = function (message) {
+            alertify.success(message);
+        }
+
+        chat.client.removeList = function (id, message) {
+            alertify.error(message);
+        }
+
+        $('#comfirmBtn').bind('click',function(e) {
+            e.preventDefault();
+            chat.server.sendConfirm($('#comfirmMessage').val());
+        });
+    </script>
+</body>
+</html>
